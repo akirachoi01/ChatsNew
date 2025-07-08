@@ -113,15 +113,6 @@
       document.getElementById("visitor-counter").innerText = Math.floor(Math.random() * 1000 + 1000);
     });
 
-    function sendMessage() {
-      const input = document.getElementById("message");
-      const chat = document.getElementById("chat");
-      if (input.value.trim()) {
-        chat.innerHTML += `<div><b>You:</b> ${input.value}</div>`;
-        input.value = "";
-        chat.scrollTop = chat.scrollHeight;
-      }
-    }
   </script>
   <script src="fire.js"></script>
 </body>
