@@ -1,195 +1,84 @@
-let playlist = [ {
-  'title': 'Rolling in the deep by Adele',
-  'audio': "assets/sample2.mp3",
-}, {
-  'title': 'Fireworks by Katy Perry',
-  'audio': "assets/sample3.mp3",
-}, {
-  'title': 'Billionaire by Bruno Mars',
-  'audio': "assets/sample.mp3",
-} ];
-i = 0;
-n = playlist.length;
-let player = document.getElementById( 'player' );
-let dur = document.getElementById( 'dur' );
-playlist.forEach( function( i ) {
-  console.log( i.audio )
-  player.src = i.audio;
-  $( '.title' ).html( i.title );
-}, );
+const YOUTUBE_API_KEY = 'AIzaSyCT5uYssh2bfXO_mOIMTwDVoQ0r5mxsstU';
+const GITHUB_TOKEN = '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'; // Personal Access Token
 
-function calculateTotalValue( length ) {
-  let minutes = Math.floor( length / 60 ),
-    seconds_int = length - minutes * 60,
-    seconds_str = seconds_int.toString( ),
-    seconds = seconds_str.substr( 0, 2 ),
-    time = minutes + ':' + seconds
-  return time;
+let playlist = [];
+let currentIndex = 0;
+
+function searchYouTube() {
+  const query = document.getElementById('search').value;
+  fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`)
+    .then(res => res.json())
+    .then(data => {
+      const results = document.getElementById('results');
+      results.innerHTML = '';
+      data.items.forEach(item => {
+        const title = item.snippet.title;
+        const videoId = item.id.videoId;
+
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <p><strong>${title}</strong></p>
+          <button onclick="addToPlaylist('${videoId}', '${title.replace(/'/g, "\\'")}')">Add to Playlist</button>
+          <hr/>
+        `;
+        results.appendChild(div);
+      });
+    });
 }
 
-function calculateCurrentValue( currentTime ) {
-  let current_hour = parseInt( currentTime / 3600 ) % 24,
-    current_minute = parseInt( currentTime / 60 ) % 60,
-    current_seconds_long = currentTime % 60,
-    current_seconds = current_seconds_long.toFixed( ),
-    current_time = ( current_minute < 10 ? "0" + current_minute : current_minute ) + ":" + ( current_seconds < 10 ? "0" + current_seconds : current_seconds );
-  return current_time;
+function addToPlaylist(videoId, title) {
+  playlist.push({ title, youtubeId: videoId });
+  updatePlaylist();
+  currentIndex = playlist.length - 1;
+  playVideo(currentIndex);
 }
 
-function initProgressBar( ) {
-  let length = player.duration;
-  let current_time = player.currentTime;
-  let totalLength = calculateTotalValue( length )
-  jQuery( ".end-time" ).html( totalLength );
-  let currentTime = calculateCurrentValue( current_time );
-  jQuery( ".start-time" ).html( currentTime );
-  dur.value = player.currentTime;
-  if ( player.currentTime == player.duration ) {
-    $( "#play-btn" ).fadeIn( "slow", function( ) {
-      $( this ).removeClass( "fa-pause" );
-      $( this ).addClass( "fa-play" );
-      dur.value = 0;
-    } );
-  }
-};
-
-function mSet( ) {
-  player.currentTime = dur.value;
+function updatePlaylist() {
+  const ul = document.getElementById('playlist');
+  ul.innerHTML = '';
+  playlist.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      ${i + 1}. ${item.title}
+      <button onclick="playVideo(${i})">▶</button>
+    `;
+    ul.appendChild(li);
+  });
 }
 
-function mDur( ) {
-  let length = player.duration;
-  dur.max = length;
+function playVideo(index) {
+  const video = playlist[index];
+  document.getElementById('nowPlaying').innerText = video.title;
+  document.getElementById('player').src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1`;
+  currentIndex = index;
 }
 
-function initPlayers( num ) {
-  for ( let i = 0; i < num; i++ ) {
-    ( function( ) {
-      let playerContainer = document.getElementById( 'player-container' ),
-        player = document.getElementById( 'player' ),
-        isPlaying = false,
-        playBtn = document.getElementById( 'play-btn' );
-      if ( playBtn != null ) {
-        playBtn.addEventListener( 'click', function( ) {
-          togglePlay( )
-        } );
+function savePlaylistToGist() {
+  const gistData = {
+    description: "Auto-saved YouTube Music Playlist",
+    public: false,
+    files: {
+      "playlist.json": {
+        content: JSON.stringify(playlist, null, 2)
       }
-
-      function togglePlay( ) {
-        if ( player.paused === false ) {
-          player.pause( );
-          isPlaying = false;
-          $( "#play-btn" ).fadeIn( "slow", function( ) {
-            $( this ).removeClass( "fa-pause" );
-            $( this ).addClass( "fa-play" );
-          } );
-        }
-        else {
-          player.play( );
-          $( "#play-btn" ).fadeIn( "slow", function( ) {
-            $( this ).removeClass( "fa-play" );
-            $( this ).addClass( "fa-pause" );
-          } );
-          isPlaying = true;
-        }
-      }
-    }( ) );
-  }
-}
-$( "#next" ).data( 'dir', 1 );
-$( "#prev" ).data( 'dir', -1 );
-$( '#next, #prev' ).on( 'click', function( ) {
-  i = ( i + $( this ).data( 'dir' ) + n ) % n;
-  console.log( i );
-  player.src = playlist[ i ].audio;
-  $( '.title' ).html( playlist[ i ].title );
-  $( '#play-btn' ).removeClass( "fa-play" );
-  $( '#play-btn' ).addClass( "fa-pause" );
-  player.play( );
-} );
-$( ".audio-player" )
-  .toArray( )
-  .forEach( function( player ) {
-    let audio = $( player ).find( "audio" )[ 0 ];
-    let volumeControl = $( player ).find( ".volumeControl .wrapper" );
-    volumeControl.find( ".outer" ).on( "click", function( e ) {
-      let volumePosition = e.pageX - $( this ).offset( ).left;
-      let audioVolume = volumePosition / $( this ).width( );
-      if ( audioVolume >= 0 && audioVolume <= 1 ) {
-        audio.volume = audioVolume;
-        $( this )
-          .find( ".inner" )
-          .css( "width", audioVolume * 100 + "%" );
-      }
-    } );
-  } );
-$( function( ) {
-  // Dropdown toggle
-  $( '.dropdown-toggle' ).click( function( ) {
-    $( this ).next( '.dropdown' ).slideToggle( "fast" );
-  } );
-  $( document ).click( function( e ) {
-    var target = e.target;
-    if ( !$( target ).is( '.dropdown-toggle' ) && !$( target ).parents( ).is( '.dropdown-toggle' ) ) {
-      $( '.dropdown' ).hide( );
     }
-  } );
-} );
-$( '#darkButton' ).click( switchDark );
-$( '#whiteButton' ).click( switchWhite );
-$( '#blueButton' ).click( switchBlue );
+  };
 
-function switchDark( ) {
-  $( '#skin' ).attr( 'class', 'dark audio-player' );
-  $( '.inner' ).css( 'background', '#fff' );
-  $( '.title' ).css( 'color', '#fff' );
-  $( '.time' ).css( 'color', '#fff' );
-  $( '.fa-volume-up' ).css( {
-    'color': '#fff'
-  } );
-  $( '.audio-player #play-btn' ).css( {
-    'color': '#fff',
-    'border-color': '#fff'
-  } );
-  $( '.ctrl_btn' ).css( {
-    'color': '#fff',
-    'border-color': '#fff'
-  } );
+  fetch('https://api.github.com/gists', {
+    method: 'POST',
+    headers: {
+      'Authorization': `token ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    body: JSON.stringify(gistData)
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Playlist saved! Gist URL: " + data.html_url);
+      console.log("Saved Gist:", data);
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      alert("Failed to save playlist.");
+    });
 }
-
-function switchWhite( ) {
-  $( '#skin' ).attr( 'class', 'white audio-player' );
-  $( '.inner' ).css( 'background', '#555' );
-  $( '.title' ).css( 'color', '#555' );
-  $( '.time' ).css( 'color', '#555' );
-  $( '.fa-volume-up' ).css( {
-    'color': '#555'
-  } );
-  $( '.audio-player #play-btn' ).css( {
-    'color': '#555',
-    'border-color': '#555'
-  } );
-  $( '.ctrl_btn' ).css( {
-    'color': '#555',
-    'border-color': '#555'
-  } );
-}
-
-function switchBlue( ) {
-  $( '#skin' ).attr( 'class', 'blue audio-player' );
-  $( '.inner' ).css( 'background', '#fff' );
-  $( '.title' ).css( 'color', '#fff' );
-  $( '.time' ).css( 'color', '#fff' );
-  $( '.fa-volume-up' ).css( {
-    'color': '#fff'
-  } );
-  $( '.audio-player #play-btn' ).css( {
-    'color': '#fff',
-    'border-color': '#fff'
-  } );
-  $( '.ctrl_btn' ).css( {
-    'color': '#fff',
-    'border-color': '#fff'
-  } );
-}
-initPlayers( jQuery( '#player-container' ).length );
