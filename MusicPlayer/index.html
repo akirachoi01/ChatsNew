@@ -1,129 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
-  <title>Music Player with YouTube</title>
-  <link href="https://fonts.googleapis.com/css?family=Darker+Grotesque|Poiret+One&display=swap" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <link rel="stylesheet" type="text/css" href="src/style.css">
+  <title>Music Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
-  <div class="audio-player" id="skin">
-    <div class="user_avatar">
-      <br />
-      <img src="assets/avatar.jpg">
-      <nav class="set">
-        <a class="dropdown-toggle" href="#" title="Menu"><i class="fa fa-cogs"></i></a>
-        <ul class="dropdown">
-          <li><a href="#" id="darkButton">Dark</a></li>
-          <li><a href="#" id="whiteButton">Default</a></li>
-          <li><a href="#" id="blueButton">Blue</a></li>
-        </ul>
-      </nav>
-    </div>
-    <div class="holder">
-      <div class="cover">
-        <img src="assets/cover.jpg">
-      </div>
-      <div class="audio-wrapper" id="player-container">
-        <!-- Audio element hidden now -->
-        <audio id="player" style="display:none">
-          <source src="" type="audio/mp3">
-        </audio>
-      </div>
-      <div class="player-controls scrubber">
-        <div>
-          <div>
-            <p class="title"></p>
-          </div>
-          <div class="range">
-            <input id="dur" type="range" class="range" name="rng" min="0" max="1" step="0.00001" value="0" style="width: 100%">
-          </div>
-          <br>
-          <span class="time start-time">0:00</span>
-          <span class="time end-time">0:00</span>
-          <br>
-          <div class="ctrl">
-            <div>
-              <a href="#prev" class="ctrl_btn" id="prev"><i class="fa fa-arrow-left"></i></a>
-              <span id="play-btn" class="fa fa-play"></span>
-              <a href="#next" class="ctrl_btn" id="next"><i class="fa fa-arrow-right"></i></a>
-            </div>
-            <div class="volumeControl">
-              <div class="wrapper">
-                <i class="fa fa-volume-up"></i>
-                <span class="outer">
-                  <span class="inner" style="width: 100%;"></span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="player">
+    <h1>YouTube Music Player</h1>
+    <input type="text" id="searchInput" placeholder="Search YouTube" />
+    <button onclick="searchYouTube()">Search</button>
+    <ul id="results"></ul>
+
+    <audio id="player" controls>
+      <source id="source" src="" type="audio/mp3">
+    </audio>
   </div>
-
-  <!-- Hidden YouTube Player -->
-  <div id="youtube-player" style="display: none;"></div>
-
-  <!-- Scripts -->
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="assets/jquery/jquery.min.js"></script>
-  <script>
-    let ytPlayer;
-    let currentVideoId = null;
-
-    function onYouTubeIframeAPIReady() {
-      ytPlayer = new YT.Player('youtube-player', {
-        height: '0',
-        width: '0',
-        videoId: '',
-        events: {
-          'onReady': () => console.log('YouTube Player Ready'),
-          'onStateChange': onPlayerStateChange
-        }
-      });
-    }
-
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) {
-        $('#play-btn').removeClass('fa-play').addClass('fa-pause');
-      } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
-        $('#play-btn').removeClass('fa-pause').addClass('fa-play');
-      }
-    }
-
-    function playYouTubeVideo(videoId, title = '') {
-      currentVideoId = videoId;
-      if (ytPlayer && ytPlayer.loadVideoById) {
-        ytPlayer.loadVideoById(videoId);
-        $('.title').text(title);
-      }
-    }
-
-    $(document).ready(function () {
-      $('#play-btn').click(function () {
-        if (!ytPlayer) return;
-        const state = ytPlayer.getPlayerState();
-        if (state === YT.PlayerState.PLAYING) {
-          ytPlayer.pauseVideo();
-        } else {
-          ytPlayer.playVideo();
-        }
-      });
-
-      $('.volumeControl .outer').click(function (e) {
-        const offset = $(this).offset();
-        const percent = (e.pageX - offset.left) / $(this).width();
-        const volume = Math.round(percent * 100);
-        ytPlayer.setVolume(volume);
-        $('.volumeControl .inner').css('width', volume + '%');
-      });
-
-      // Simulate loading a video (replace with your logic or search)
-      playYouTubeVideo('dQw4w9WgXcQ', 'Never Gonna Give You Up');
-    });
-  </script>
+  <script src="/src/script.js"></script>
 </body>
 </html>
